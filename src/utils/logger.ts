@@ -2,8 +2,17 @@ import { createLogger, format, transports } from 'winston';
 import * as path from 'path';
 import * as fs from 'fs';
 
-const logsDir = path.join(process.cwd(), 'logs');
-if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
+const logsDir = process.env.VERCEL
+  ? '/tmp/logs'
+  : path.join(process.cwd(), 'logs');
+
+let canWriteLogs = false;
+try {
+  if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
+  canWriteLogs = true;
+} catch {
+  // Read-only filesystem (Vercel Lambda) — console only
+}
 
 const { combine, timestamp, colorize, printf, errors } = format;
 
@@ -14,28 +23,35 @@ const consoleFormat = printf(({ level, message, timestamp: ts, step, company, ..
   return `${ts} ${level} ${prefix}${ctx} ${message}${metaStr}`;
 });
 
+const loggerTransports: transports.StreamTransportInstance[] = [
+  new transports.Console({
+    format: combine(colorize(), consoleFormat),
+  }),
+];
+
+if (canWriteLogs) {
+  loggerTransports.push(
+    new transports.File({
+      filename: path.join(logsDir, 'pipeline.log'),
+      format: combine(format.json()),
+      maxsize: 10 * 1024 * 1024,
+      maxFiles: 5,
+    }) as unknown as transports.StreamTransportInstance,
+    new transports.File({
+      filename: path.join(logsDir, 'errors.log'),
+      level: 'error',
+      format: combine(format.json()),
+    }) as unknown as transports.StreamTransportInstance,
+  );
+}
+
 export const logger = createLogger({
   level: process.env.LOG_LEVEL ?? 'info',
   format: combine(
     errors({ stack: true }),
     timestamp({ format: 'HH:mm:ss' }),
   ),
-  transports: [
-    new transports.Console({
-      format: combine(colorize(), consoleFormat),
-    }),
-    new transports.File({
-      filename: path.join(logsDir, 'pipeline.log'),
-      format: combine(format.json()),
-      maxsize: 10 * 1024 * 1024,
-      maxFiles: 5,
-    }),
-    new transports.File({
-      filename: path.join(logsDir, 'errors.log'),
-      level: 'error',
-      format: combine(format.json()),
-    }),
-  ],
+  transports: loggerTransports,
 });
 
 export function stepLogger(step: string) {
