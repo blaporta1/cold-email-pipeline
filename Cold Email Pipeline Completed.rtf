@@ -1,0 +1,142 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Bold;\f1\fnil\fcharset0 Menlo-Regular;\f2\fnil\fcharset0 Menlo-Italic;
+}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red47\green180\blue29;\red171\green216\blue255;
+\red152\green152\blue152;}
+{\*\expandedcolortbl;;\csgray\c0;\cssrgb\c20241\c73898\c14950;\cssrgb\c72102\c87821\c100000;
+\cssrgb\c66083\c66083\c66083;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\b\fs22 \cf2 \CocoaLigature0 Cold Email Pipeline \'97 Complete
+\f1\b0 \
+  \
+  
+\f0\b 19 files, 0 TypeScript errors.
+\f1\b0  Run it with:\
+  cp .env.example .env   \cf3 # fill in your API keys\cf2 \
+  npm run dev            \cf3 # starts on http://localhost:3000\cf2 \
+  \
+  
+\f0\b What's included
+\f1\b0 \
+\
+  
+\f0\b \cf4 src/pipeline.ts
+\f1\b0 \cf2  \'97 Orchestrates all 8 steps with \cf4 p-limit\cf2  concurrency, per-step\
+  cost tracking, JSON/CSV checkpoint output, and real-time Socket.io progress\
+  events.\
+  \
+  
+\f0\b \cf4 src/email-waterfall.ts
+\f1\b0 \cf2  \'97 8-layer, two-pass waterfall exactly as described:\
+  - Pass 1: \cf4 apollo_enrich\cf2  \uc0\u8594  \cf4 kitt_finder\cf2  \uc0\u8594  \cf4 leadmagic_finder\cf2  \uc0\u8594  \cf4 hunter_finder\cf2 \
+  - Pass 2: \cf4 leadmagic_personal\cf2  \uc0\u8594  \cf4 leadmagic_b2b_social\cf2  \uc0\u8594  \cf4 hunter_domain\cf2  \uc0\u8594 \
+  \cf4 icypeas_finder\cf2 \
+  - Final fallback: \cf4 pattern_guess\cf2  (algorithmic, zero API cost)\
+\
+  
+\f0\b \cf4 src/steps/
+\f1\b0 \cf2  \'97 All 8 steps as individual modules:\
+\
+  
+\f0\b File:
+\f1\b0  \cf4 domain-validator.ts\cf2 \
+  
+\f0\b Step:
+\f1\b0  Validate domains\
+  
+\f0\b API:
+\f1\b0  Hunter.io\
+  \uc0\u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472             \
+  
+\f0\b File:
+\f1\b0  \cf4 website-scraper.ts\cf2 \
+  
+\f0\b Step:
+\f1\b0  Scrape products/positioning\
+  
+\f0\b API:
+\f1\b0  Cheerio\
+  \uc0\u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \
+  
+\f0\b File:
+\f1\b0  \cf4 meta-ads.ts\cf2 \
+  
+\f0\b Step:
+\f1\b0  Pull active ad creatives\
+  
+\f0\b API:
+\f1\b0  Meta Graph API\
+  \uc0\u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \
+  
+\f0\b File:
+\f1\b0  \cf4 ai-analyzer.ts\cf2                     \
+  
+\f0\b Step:
+\f1\b0  Strategy analysis + personalization hooks\
+  
+\f0\b API:
+\f1\b0  Claude Haiku + Gemini\
+  \uc0\u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \
+  
+\f0\b File:
+\f1\b0  \cf4 icp-scorer.ts\cf2 \
+  
+\f0\b Step:
+\f1\b0  Weighted scoring + tier assignment\
+  
+\f0\b API:
+\f1\b0  Local\
+  \uc0\u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \
+  
+\f0\b File:
+\f1\b0  \cf4 ad-generator.ts\cf2 \
+  
+\f0\b Step:
+\f1\b0  Sample ad concepts + images\
+  
+\f0\b API:
+\f1\b0  Claude + Nano Banana 2\
+  \uc0\u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \
+  
+\f0\b File:
+\f1\b0  \cf4 email-sender.ts\cf2 \
+  
+\f0\b Step:
+\f1\b0  Add to campaign with custom vars\
+  
+\f0\b API:
+\f1\b0  Instantly\
+  \
+  
+\f0\b \cf4 public/index.html
+\f1\b0 \cf2  \'97 Full dark-mode web UI with:\
+  - Drag-and-drop CSV upload\
+  - Pipeline config (concurrency, ICP %, step toggles)\
+  - Real-time 8-step progress tracker \
+  - Results + export downloads\
+  - 
+\f0\b 3-step Ad Generator
+\f1\b0  (Product Info \uc0\u8594  Select Concept \u8594  Generate Images)\
+  \
+  
+\f0\b \cf4 src/icp-config.ts
+\f1\b0 \cf2  \'97 Configurable ICP criteria and email templates. Edit\
+  \cf4 ICP_CONFIG\cf2  to tune your scoring weights, target industries, and\
+  positive/negative keywords.\
+\
+\cf5 \uc0\u10043 \cf2  \cf5 Cooked for 10m 4s\cf2 \
+\
+\cf5 \uc0\u8251 \cf2  
+\f0\b \cf5 recap: 
+\f2\i\b0 Built the full cold email pipeline from your YouTube summary. Copy 
+\f1\i0 \cf2 \
+  
+\f2\i \cf5 .env.example to .env, fill in your API keys, then run npm run dev to launch 
+\f1\i0 \cf2 \
+  
+\f2\i \cf5 the web app at localhost:3000. (disable recaps in /config)
+\f1\i0 \cf2 \
+  \
+}

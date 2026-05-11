@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cold Outbound — BridgePoint AI</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0a0f1a;
+    --surface:  #111827;
+    --card:     #1a2235;
+    --border:   #1f2d45;
+    --border2:  #2a3d55;
+    --primary:  #4f7cff;
+    --primary-dim: #2a4bcc;
+    --green:    #22c55e;
+    --yellow:   #eab308;
+    --red:      #ef4444;
+    --text:     #e2e8f0;
+    --muted:    #64748b;
+    --muted2:   #94a3b8;
+    --radius:   10px;
+    --font:     -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* ── Sidebar ─────────────────────────────────────────────────────────────── */
+  .sidebar {
+    width: 220px;
+    min-height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+  }
+
+  .sidebar-logo {
+    padding: 20px 18px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-mark {
+    width: 30px; height: 30px;
+    background: var(--primary);
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .logo-text { font-size: 13px; font-weight: 600; color: var(--text); }
+  .logo-sub  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+  .sidebar-nav {
+    padding: 12px 10px;
+    flex: 1;
+  }
+
+  .nav-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    padding: 8px 8px 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    color: var(--muted2);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all .15s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+
+  .nav-item:hover    { background: var(--card); color: var(--text); }
+  .nav-item.active   { background: rgba(79,124,255,.12); color: var(--primary); }
+  .nav-item .icon    { font-size: 15px; width: 20px; text-align: center; }
+  .nav-badge         { margin-left: auto; background: var(--primary); color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 99px; }
+
+  .sidebar-footer {
+    padding: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .cost-tracker {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  .cost-label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+  .cost-value { font-size: 22px; font-weight: 700; color: var(--text); margin-top: 2px; }
+  .cost-sub   { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+  /* ── Main ────────────────────────────────────────────────────────────────── */
+  .main {
+    margin-left: 220px;
+    flex: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topbar {
+    height: 56px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 16px;
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .page-title { font-size: 15px; font-weight: 600; }
+  .topbar-spacer { flex: 1; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-green  { background: rgba(34,197,94,.1);  color: var(--green); }
+  .badge-yellow { background: rgba(234,179,8,.1);  color: var(--yellow); }
+  .badge-blue   { background: rgba(79,124,255,.1); color: var(--primary); }
+  .badge-red    { background: rgba(239,68,68,.1);  color: var(--red); }
+
+  .content {
+    padding: 24px;
+    flex: 1;
+  }
+
+  /* ── Views ────────────────────────────────────────────────────────────────── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── Upload Zone ──────────────────────────────────────────────────────────── */
+  .upload-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .drop-zone {
+    border: 2px dashed var(--border2);
+    border-radius: var(--radius);
+    padding: 56px 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    background: var(--card);
+  }
+
+  .drop-zone:hover, .drop-zone.over {
+    border-color: var(--primary);
+    background: rgba(79,124,255,.04);
+  }
+
+  .drop-icon { font-size: 40px; margin-bottom: 12px; }
+  .drop-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .drop-sub { color: var(--muted); font-size: 13px; }
+  .drop-sub span { color: var(--primary); cursor: pointer; }
+  .drop-limit { margin-top: 10px; font-size: 11px; color: var(--muted); }
+
+  #file-input { display: none; }
+
+  /* ── Config Card ─────────────────────────────────────────────────────────── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .form-group { margin-bottom: 14px; }
+  .form-label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted2);
+    font-weight: 500;
+    margin-bottom: 5px;
+  }
+
+  .form-input, .form-select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 7px;
+    padding: 8px 10px;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    transition: border-color .15s;
+    font-family: var(--font);
+  }
+
+  .form-input:focus, .form-select:focus { border-color: var(--primary); }
+
+  .steps-toggle { display: flex; flex-direction: column; gap: 6px; }
+
+  .step-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--muted2);
+    transition: all .15s;
+  }
+
+  .step-toggle.enabled { border-color: rgba(79,124,255,.3); color: var(--text); background: rgba(79,124,255,.05); }
+  .step-toggle .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border2); flex-shrink: 0; }
+  .step-toggle.enabled .dot { background: var(--primary); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font);
+    transition: all .15s;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+    width: 100%;
+  }
+  .btn-primary:hover:not(:disabled) { background: #6390ff; }
+  .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+
+  .btn-ghost {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    color: var(--text);
+  }
+  .btn-ghost:hover { background: var(--card); }
+
+  /* ── Preview Strip ───────────────────────────────────────────────────────── */
+  .preview-strip {
+    margin-top: 16px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    display: none;
+  }
+
+  .preview-strip.visible { display: block; }
+  .preview-meta { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .preview-meta strong { color: var(--text); }
+
+  .preview-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .preview-table th { text-align: left; padding: 6px 10px; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+  .preview-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .preview-table tr:last-child td { border-bottom: none; }
+
+  /* ── Stats Row ────────────────────────────────────────────────────────────── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+
+  .stat-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+  .stat-value { font-size: 28px; font-weight: 700; color: var(--text); margin-top: 4px; line-height: 1; }
+  .stat-sub   { font-size: 11px; color: var(--muted); margin-top: 5px; }
+  .stat-delta { color: var(--green); }
+
+  /* ── Pipeline Steps ──────────────────────────────────────────────────────── */
+  .pipeline-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .pipeline-step {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: border-color .2s;
+  }
+
+  .pipeline-step.active  { border-color: var(--primary); }
+  .pipeline-step.done    { border-color: rgba(34,197,94,.2); }
+  .pipeline-step.error   { border-color: rgba(239,68,68,.2); }
+
+  .step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    flex-shrink: 0;
+    font-family: monospace;
+  }
+
+  .pipeline-step.active .step-num  { background: rgba(79,124,255,.15); border-color: var(--primary); color: var(--primary); }
+  .pipeline-step.done   .step-num  { background: rgba(34,197,94,.1); border-color: var(--green); color: var(--green); }
+
+  .step-info { flex: 1; }
+  .step-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .step-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .step-bar-wrap {
+    width: 120px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .step-bar { height: 100%; background: var(--primary); border-radius: 99px; transition: width .3s; width: 0; }
+  .pipeline-step.done .step-bar { background: var(--green); width: 100%; }
+
+  .step-status { font-size: 11px; color: var(--muted); width: 70px; text-align: right; flex-shrink: 0; }
+  .pipeline-step.active .step-status { color: var(--primary); }
+  .pipeline-step.done   .step-status { color: var(--green); }
+
+  /* ── Results Table ───────────────────────────────────────────────────────── */
+  .results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .results-title { font-size: 15px; font-weight: 600; }
+  .results-actions { display: flex; gap: 8px; }
+
+  .table-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: auto;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead th {
+    padding: 10px 14px;
+    text-align: left;
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+  }
+
+  tbody td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,.02); }
+
+  .tier-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .tier-top  { background: rgba(34,197,94,.1);  color: var(--green);   border: 1px solid rgba(34,197,94,.2); }
+  .tier-mid  { background: rgba(234,179,8,.1);  color: var(--yellow);  border: 1px solid rgba(234,179,8,.2); }
+  .tier-low  { background: rgba(100,116,139,.1); color: var(--muted);  border: 1px solid var(--border); }
+
+  .score-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .score-bar-bg { width: 50px; height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .score-bar-fill { height: 100%; border-radius: 99px; background: var(--primary); }
+
+  .ads-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .ads-dot.active { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,.6); }
+  .ads-dot.none   { background: var(--border2); }
+
+  .email-src {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* ── Ad Generator View ────────────────────────────────────────────────────── */
+  .ad-gen-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .ad-steps-nav { display: flex; flex-direction: column; gap: 3px; }
+
+  .ad-step-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--muted);
+  }
+
+  .ad-step-item.active { background: rgba(79,124,255,.1); color: var(--primary); }
+  .ad-step-item.done   { color: var(--green); }
+  .ad-step-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--border);
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .ad-step-item.active .ad-step-num { background: rgba(79,124,255,.2); color: var(--primary); }
+  .ad-step-item.done   .ad-step-num { background: rgba(34,197,94,.15); color: var(--green); }
+
+  .ad-panel { display: none; }
+  .ad-panel.active { display: block; }
+
+  .concept-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; }
+
+  .concept-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+
+  .concept-card:hover    { border-color: var(--border2); }
+  .concept-card.selected { border-color: var(--primary); background: rgba(79,124,255,.05); }
+
+  .concept-headline { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .concept-body     { font-size: 12px; color: var(--muted2); line-height: 1.5; margin-bottom: 10px; }
+  .concept-cta      { font-size: 11px; font-weight: 600; color: var(--primary); }
+  .concept-hook     { font-size: 10px; color: var(--muted); margin-top: 6px; border-top: 1px solid var(--border); padding-top: 6px; }
+
+  .ad-image-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; }
+
+  .ad-image-card {
+    aspect-ratio: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ad-image-card img { width: 100%; height: 100%; object-fit: cover; }
+  .ad-image-placeholder { text-align: center; color: var(--muted); }
+  .ad-image-placeholder .icon { font-size: 32px; margin-bottom: 8px; }
+
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .generating-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(10,15,26,.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    backdrop-filter: blur(2px);
+  }
+
+  .generating-text { font-size: 12px; color: var(--muted2); }
+
+  /* ── Toast ────────────────────────────────────────────────────────────────── */
+  .toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 999;
+  }
+
+  .toast {
+    background: var(--card);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    max-width: 300px;
+    animation: slideIn .2s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  @keyframes slideIn { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state h3 { font-size: 15px; font-weight: 600; color: var(--muted2); margin-bottom: 6px; }
+
+  /* ── Progress bar ─────────────────────────────────────────────────────────── */
+  .global-progress {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--border);
+    z-index: 999;
+  }
+  .global-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #a78bfa);
+    border-radius: 99px;
+    transition: width .4s;
+    width: 0%;
+  }
+</style>
+</head>
+<body>
+
+<div class="global-progress">
+  <div class="global-progress-bar" id="global-progress-bar"></div>
+</div>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">B</div>
+    <div>
+      <div class="logo-text">BridgePoint AI</div>
+      <div class="logo-sub">Cold Outbound</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-label">Outbound</div>
+    <button class="nav-item active" onclick="showView('upload')">
+      <span class="icon">⬆</span> Upload
+    </button>
+    <button class="nav-item" onclick="showView('pipeline')" id="nav-pipeline">
+      <span class="icon">⚡</span> Pipeline
+      <span class="nav-badge" id="pipeline-badge" style="display:none">0</span>
+    </button>
+    <button class="nav-item" onclick="showView('results')" id="nav-results">
+      <span class="icon">◎</span> Results
+    </button>
+
+    <div class="nav-label" style="margin-top:10px">Tools</div>
+    <button class="nav-item" onclick="showView('ad-generator')">
+      <span class="icon">🎨</span> Ad Generator
+    </button>
+    <button class="nav-item" onclick="showView('outputs')">
+      <span class="icon">⬇</span> Exports
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="cost-tracker">
+      <div class="cost-label">Session Cost</div>
+      <div class="cost-value" id="session-cost">$0.00</div>
+      <div class="cost-sub" id="cost-per-prospect">— per prospect</div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <header class="topbar">
+    <div class="page-title" id="page-title">Cold Outbound</div>
+    <div class="topbar-spacer"></div>
+    <span class="badge badge-blue" id="status-badge">Ready</span>
+  </header>
+
+  <div class="content">
+
+    <!-- ── Upload View ──────────────────────────────────────────────────────── -->
+    <div class="view active" id="view-upload">
+      <div class="upload-grid">
+        <div>
+          <div class="drop-zone" id="drop-zone">
+            <div class="drop-icon">📋</div>
+            <div class="drop-title">Drop your prospect CSV</div>
+            <div class="drop-sub">Drag & drop or <span onclick="document.getElementById('file-input').click()">browse files</span></div>
+            <div class="drop-limit">Up to 150,000 rows · CSV format</div>
+          </div>
+          <input type="file" id="file-input" accept=".csv">
+
+          <div class="preview-strip" id="preview-strip">
+            <div class="preview-meta" id="preview-meta"></div>
+            <table class="preview-table" id="preview-table">
+              <thead><tr><th>First Name</th><th>Company</th><th>Domain</th></tr></thead>
+              <tbody id="preview-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="card">
+            <div class="card-title">⚙️ Pipeline Config</div>
+
+            <div class="form-group">
+              <label class="form-label">Concurrency</label>
+              <input type="number" class="form-input" id="cfg-concurrency" value="10" min="1" max="50">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">ICP Top %</label>
+              <input type="number" class="form-input" id="cfg-icp-percentile" value="20" min="1" max="50">
+              <div style="font-size:11px;color:var(--muted);margin-top:4px">Top % gets AI-generated sample ads</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Pipeline Steps</label>
+              <div class="steps-toggle" id="steps-toggle">
+                <div class="step-toggle enabled" data-step="domain-validation">
+                  <div class="dot"></div> Domain Validation
+                </div>
+                <div class="step-toggle enabled" data-step="website-scraping">
+                  <div class="dot"></div> Website Scraping
+                </div>
+                <div class="step-toggle enabled" data-step="meta-ads">
+                  <div class="dot"></div> Meta Ads Check
+                </div>
+                <div class="step-toggle enabled" data-step="ai-analysis">
+                  <div class="dot"></div> AI Strategy Analysis
+                </div>
+                <div class="step-toggle enabled" data-step="icp-scoring">
+                  <div class="dot"></div> ICP Scoring
+                </div>
+                <div class="step-toggle enabled" data-step="email-enrichment">
+                  <div class="dot"></div> Email Enrichment
+                </div>
+                <div class="step-toggle enabled" data-step="ad-generation">
+                  <div class="dot"></div> Ad Generation
+                </div>
+                <div class="step-toggle enabled" data-step="email-delivery">
+                  <div class="dot"></div> Email Delivery
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary" id="start-btn" disabled onclick="startPipeline()">
+              ⚡ Start Pipeline
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Pipeline View ────────────────────────────────────────────────────── -->
+    <div class="view" id="view-pipeline">
+      <div class="stats-row" id="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Total Prospects</div>
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-sub">loaded from CSV</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Processed</div>
+          <div class="stat-value" id="stat-processed">0</div>
+          <div class="stat-sub" id="stat-pct">0%</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Top Tier (ICP)</div>
+          <div class="stat-value" id="stat-top">—</div>
+          <div class="stat-sub">get AI-generated ads</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Emails Sent</div>
+          <div class="stat-value" id="stat-sent">0</div>
+          <div class="stat-sub stat-delta" id="stat-sent-sub">via Instantly</div>
+        </div>
+      </div>
+
+      <div class="pipeline-steps" id="pipeline-steps">
+        <div class="pipeline-step" id="step-domain-validation">
+          <div class="step-num">1</div>
+          <div class="step-info">
+            <div class="step-name">Domain Validation</div>
+            <div class="step-desc">Hunter.io — validates MX records, filters disposable/webmail</div>
+          </div>
+          <div class="step-bar-wrap"><div class="step-bar" id="bar-domain-validation"></div></div>
+          <div class="step-status" id="status-domain-validation">—</div>
+        </div>
+        <div class="pipeline-step" id="step-website-scraping">
+          <div class="step-num">2</div>
+          <div class="step-info">
+            <div class="step-name">Website Scraping</div>
+            <div class="step-desc">Extracts products, positioning, tech stack, ecommerce signals</div>
+          </div>
+          <div class="step-bar-wrap"><div class="step-bar" id="bar-website-scraping"></div></div>
+          <div class="step-status" id="status-website-scraping">—</div>
+        </div>
+        <div class="pipeline-step" id="step-meta-ads">
+          <div class="step-num">3</div>
+          <div class="step-info">
+            <div class="step-name">Meta Ads Check</div>
+            <div class="step-desc">Meta Ads Library — pulls active creatives + estimated spend</div>
+          </div>
+          <div class="step-bar-wrap"><div class="step-bar" id="bar-meta-ads"></div></div>
+          <div class="step-status" id="status-meta-ads">—</div>
+        </div>
+        <div class="pipeline-step" id="step-ai-analysis">
+          <div class="step-num">4</div>
+          <div class="step-info">
+            <div class="step-name">AI Strategy Analysis</div>
+            <div class="step-desc">Claude + Gemini analyze ad strategy, generate personalization hooks</div>
+          </div>
+          <div class="step-bar-wrap"><div class="step-bar" id="bar-ai-analysis"></div></div>
+          <div class="step-status" id="status-ai-analysis">—</div>
+        </div>
+        <div class="pipeline-step" id="step-icp-scoring">
+          <div class="step-num">5</div>
+          <div class="step-info">
+            <div class="step-name">ICP Scoring</div>
+            <div class="step-desc">Scores against ideal customer profile — routes top 20% to ad gen</div>
+          </div>
+          <div class="step-bar-wrap"><div class="step-bar" id="bar-icp-scoring"></div></div>
+          <div class="step-status" id="status-icp-scoring">—</div>
+        </div>
+        <div class="pipeline-step" id="step-email-enrichment">
+          <div class="step-num">6</div>
+          <div class="step-info">
+            <div class="step-name">Email Enrichment</div>
+            <div class="step-desc">8-layer waterfall: Apollo → Kitt → LeadMagic → Hunter → IcyPeas → Pattern</div>
+          </div>
+          <div class="step-bar-wrap"><div class="step-bar" id="bar-email-enrichment"></div></div>
+          <div class="step-status" id="status-email-enrichment">—</div>
+        </div>
+        <div class="pipeline-step" id="step-ad-generation">
+          <div class="step-num">7</div>
+          <div class="step-info">
+            <div class="step-name">AI Ad Generation</div>
+            <div class="step-desc">Nano Banana 2 — generates brand-specific sample ads for top 20%</div>
+          </div>
+          <div class="step-bar-wrap"><div class="step-bar" id="bar-ad-generation"></div></div>
+          <div class="step-status" id="status-ad-generation">—</div>
+        </div>
+        <div class="pipeline-step" id="step-email-delivery">
+          <div class="step-num">8</div>
+          <div class="step-info">
+            <div class="step-name">Email Delivery</div>
+            <div class="step-desc">Instantly — personalized delivery referencing their actual ad activity</div>
+          </div>
+          <div class="step-bar-wrap"><div class="step-bar" id="bar-email-delivery"></div></div>
+          <div class="step-status" id="status-email-delivery">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Results View ──────────────────────────────────────────────────────── -->
+    <div class="view" id="view-results">
+      <div class="results-header">
+        <div class="results-title">Results</div>
+        <div class="results-actions">
+          <button class="btn btn-ghost" id="export-csv-btn" onclick="exportCSV()">⬇ Export CSV</button>
+        </div>
+      </div>
+
+      <div id="results-empty" class="empty-state">
+        <div class="icon">🔍</div>
+        <h3>No results yet</h3>
+        <p>Run the pipeline to see enriched prospects here</p>
+      </div>
+
+      <div class="table-wrap" id="results-table-wrap" style="display:none">
+        <table>
+          <thead>
+            <tr>
+              <th>Company</th>
+              <th>Domain</th>
+              <th>Email</th>
+              <th>Source</th>
+              <th>ICP Score</th>
+              <th>Tier</th>
+              <th>Meta Ads</th>
+              <th>Est. Spend</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="results-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Ad Generator View ─────────────────────────────────────────────────── -->
+    <div class="view" id="view-ad-generator">
+      <div class="ad-gen-layout">
+        <div class="card" style="padding:14px">
+          <div class="card-title">🎨 Ad Generator</div>
+          <div class="ad-steps-nav">
+            <div class="ad-step-item active" onclick="showAdPanel(1)">
+              <span class="ad-step-num">1</span> Product Info
+            </div>
+            <div class="ad-step-item" id="adnav-2" onclick="showAdPanel(2)">
+              <span class="ad-step-num">2</span> Select Concept
+            </div>
+            <div class="ad-step-item" id="adnav-3" onclick="showAdPanel(3)">
+              <span class="ad-step-num">3</span> Generate Images
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <!-- Panel 1: Product Info -->
+          <div class="ad-panel active" id="adpanel-1">
+            <div class="card">
+              <div class="card-title">Product / Brand Info</div>
+              <div class="form-group">
+                <label class="form-label">Company Name</label>
+                <input type="text" class="form-input" id="adgen-company" placeholder="Acme Co.">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Domain</label>
+                <input type="text" class="form-input" id="adgen-domain" placeholder="acme.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Product / Service</label>
+                <input type="text" class="form-input" id="adgen-product" placeholder="Premium dog food subscription">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Target Audience</label>
+                <input type="text" class="form-input" id="adgen-audience" placeholder="Pet owners aged 25–45">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Value Proposition</label>
+                <input type="text" class="form-input" id="adgen-value-prop" placeholder="Vet-approved, delivered monthly">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Current Ad Weaknesses (optional)</label>
+                <input type="text" class="form-input" id="adgen-weaknesses" placeholder="Generic creative, no social proof">
+              </div>
+              <button class="btn btn-primary" onclick="generateConcepts()">
+                <span id="concepts-spinner" style="display:none" class="spinner"></span>
+                Generate Concepts →
+              </button>
+            </div>
+          </div>
+
+          <!-- Panel 2: Select Concept -->
+          <div class="ad-panel" id="adpanel-2">
+            <div class="card">
+              <div class="card-title">Select a Concept</div>
+              <div id="concepts-loading" style="text-align:center;padding:40px;color:var(--muted);display:none">
+                <div class="spinner" style="width:24px;height:24px;margin:0 auto 12px"></div>
+                <div>Generating ad concepts with Claude...</div>
+              </div>
+              <div class="concept-grid" id="concept-grid"></div>
+              <div style="margin-top:16px;display:flex;justify-content:flex-end">
+                <button class="btn btn-primary" style="width:auto;padding:10px 24px" onclick="goToImageGen()">
+                  Generate Images →
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel 3: Generate Images -->
+          <div class="ad-panel" id="adpanel-3">
+            <div class="card">
+              <div class="card-title">Generated Ad Images</div>
+              <div id="images-loading" style="text-align:center;padding:40px;color:var(--muted);display:none">
+                <div class="spinner" style="width:24px;height:24px;margin:0 auto 12px"></div>
+                <div>Generating images with Nano Banana 2...</div>
+              </div>
+              <div class="ad-image-grid" id="ad-image-grid"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Outputs View ──────────────────────────────────────────────────────── -->
+    <div class="view" id="view-outputs">
+      <div class="results-header">
+        <div class="results-title">Exports</div>
+        <button class="btn btn-ghost" onclick="loadOutputs()">↻ Refresh</button>
+      </div>
+      <div id="outputs-list">
+        <div class="empty-state">
+          <div class="icon">📁</div>
+          <h3>No exports yet</h3>
+          <p>Run the pipeline to generate CSV and JSON exports</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+const socket = io();
+let sessionId = null;
+let prospectData = null;
+let csvFile = null;
+let selectedConcepts = [];
+let adgenData = {};
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(v => v.classList.remove('active'));
+  document.getElementById(`view-${name}`).classList.add('active');
+
+  const nav = document.querySelector(`[onclick="showView('${name}')"]`);
+  if (nav) nav.classList.add('active');
+
+  const titles = {
+    'upload': 'Cold Outbound — Upload',
+    'pipeline': 'Pipeline Progress',
+    'results': 'Results',
+    'ad-generator': 'Ad Generator',
+    'outputs': 'Exports',
+  };
+  document.getElementById('page-title').textContent = titles[name] ?? name;
+
+  if (name === 'outputs') loadOutputs();
+}
+
+// ── File Upload ────────────────────────────────────────────────────────────────
+
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('over');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) handleFile(fileInput.files[0]);
+});
+
+async function handleFile(file) {
+  csvFile = file;
+  const formData = new FormData();
+  formData.append('csv', file);
+
+  try {
+    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    prospectData = data;
+    showPreview(data);
+    document.getElementById('start-btn').disabled = false;
+    toast(`✓ ${data.count.toLocaleString()} prospects loaded`, 'green');
+  } catch (err) {
+    toast(`Error: ${err.message}`, 'red');
+  }
+}
+
+function showPreview(data) {
+  const strip = document.getElementById('preview-strip');
+  const meta  = document.getElementById('preview-meta');
+  const tbody = document.getElementById('preview-tbody');
+
+  meta.innerHTML = `<strong>${data.count.toLocaleString()}</strong> prospects ready to process`;
+  tbody.innerHTML = data.sample.map(p =>
+    `<tr><td>${p.firstName || '—'}</td><td>${p.company}</td><td>${p.domain}</td></tr>`
+  ).join('');
+
+  strip.classList.add('visible');
+}
+
+// ── Step toggles ──────────────────────────────────────────────────────────────
+
+document.querySelectorAll('.step-toggle').forEach(el => {
+  el.addEventListener('click', () => el.classList.toggle('enabled'));
+});
+
+// ── Pipeline Start ────────────────────────────────────────────────────────────
+
+async function startPipeline() {
+  if (!csvFile) return;
+
+  const skipped = [...document.querySelectorAll('.step-toggle:not(.enabled)')].map(el => el.dataset.step);
+  const concurrency = parseInt(document.getElementById('cfg-concurrency').value, 10);
+  const icpPercentile = parseInt(document.getElementById('cfg-icp-percentile').value, 10);
+
+  const formData = new FormData();
+  formData.append('csv', csvFile);
+  formData.append('concurrency', concurrency);
+  formData.append('icpTopPercentile', icpPercentile);
+  formData.append('skipSteps', JSON.stringify(skipped));
+
+  const res = await fetch('/api/pipeline/start', { method: 'POST', body: formData });
+  const { sessionId: sid, total } = await res.json();
+  sessionId = sid;
+
+  socket.emit('join', sessionId);
+
+  document.getElementById('stat-total').textContent = total.toLocaleString();
+  document.getElementById('pipeline-badge').textContent = total;
+  document.getElementById('pipeline-badge').style.display = '';
+
+  showView('pipeline');
+  updateStatusBadge('running', 'Running...');
+  toast('⚡ Pipeline started', 'blue');
+}
+
+// ── Socket Events ─────────────────────────────────────────────────────────────
+
+socket.on('progress', (p) => {
+  document.getElementById('global-progress-bar').style.width = p.percentage + '%';
+  document.getElementById('stat-processed').textContent = p.completed.toLocaleString();
+  document.getElementById('stat-pct').textContent = `${p.percentage}%`;
+
+  const prevSteps = getStepNames().slice(0, p.stepIndex - 1);
+  const currStep = p.step;
+
+  prevSteps.forEach(s => markStep(s, 'done'));
+  markStep(currStep, 'active');
+});
+
+socket.on('complete', (result) => {
+  document.getElementById('global-progress-bar').style.width = '100%';
+  document.getElementById('stat-sent').textContent = result.emailsSent.toLocaleString();
+  document.getElementById('stat-top').textContent = result.topTier.toLocaleString();
+  document.getElementById('session-cost').textContent = '$' + result.totalCostUsd.toFixed(2);
+  document.getElementById('cost-per-prospect').textContent = '$' + result.costPerProspect.toFixed(3) + '/prospect';
+
+  getStepNames().forEach(s => markStep(s, 'done'));
+  updateStatusBadge('done', 'Complete');
+
+  toast(`✓ Pipeline complete — ${result.emailsSent.toLocaleString()} emails sent at $${result.costPerProspect.toFixed(2)}/prospect`, 'green');
+  document.getElementById('nav-results').click();
+  loadResults();
+
+  setTimeout(() => {
+    document.getElementById('global-progress-bar').style.width = '0';
+  }, 3000);
+});
+
+socket.on('error', (e) => {
+  updateStatusBadge('error', 'Error');
+  toast(`Pipeline error: ${e.message}`, 'red');
+});
+
+// ── Results ────────────────────────────────────────────────────────────────────
+
+async function loadResults() {
+  if (!sessionId) return;
+  const res = await fetch(`/api/pipeline/${sessionId}/results`);
+  if (!res.ok) return;
+  const result = await res.json();
+  renderResults(result);
+}
+
+function renderResults(result) {
+  const wrap = document.getElementById('results-table-wrap');
+  const empty = document.getElementById('results-empty');
+
+  if (!result) { wrap.style.display = 'none'; empty.style.display = ''; return; }
+
+  wrap.style.display = '';
+  empty.style.display = 'none';
+
+  const tbody = document.getElementById('results-tbody');
+  tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:20px">
+    Results saved to output/ directory. Download via Exports tab.
+  </td></tr>`;
+}
+
+// ── Outputs ────────────────────────────────────────────────────────────────────
+
+async function loadOutputs() {
+  const res = await fetch('/api/outputs');
+  const { files } = await res.json();
+  const el = document.getElementById('outputs-list');
+
+  if (!files.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">📁</div><h3>No exports yet</h3><p>Run the pipeline to generate exports</p></div>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Filename</th><th>Size</th><th>Created</th><th></th></tr></thead>
+    <tbody>${files.map(f => `
+      <tr>
+        <td>${f.name}</td>
+        <td>${formatBytes(f.size)}</td>
+        <td>${new Date(f.created).toLocaleString()}</td>
+        <td><a href="/api/outputs/${f.name}" download style="color:var(--primary);text-decoration:none;font-size:12px;font-weight:600">⬇ Download</a></td>
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function exportCSV() { showView('outputs'); loadOutputs(); }
+
+// ── Ad Generator ──────────────────────────────────────────────────────────────
+
+let adConceptsData = [];
+let selectedConceptId = null;
+
+function showAdPanel(n) {
+  document.querySelectorAll('.ad-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.ad-step-item').forEach((el, i) => {
+    el.classList.remove('active');
+    if (i < n - 1) el.classList.add('done');
+  });
+  document.getElementById(`adpanel-${n}`).classList.add('active');
+  const items = document.querySelectorAll('.ad-step-item');
+  if (items[n-1]) items[n-1].classList.add('active');
+}
+
+async function generateConcepts() {
+  const company = document.getElementById('adgen-company').value.trim();
+  const domain = document.getElementById('adgen-domain').value.trim();
+  const product = document.getElementById('adgen-product').value.trim();
+  const audience = document.getElementById('adgen-audience').value.trim();
+  const valueProp = document.getElementById('adgen-value-prop').value.trim();
+  const weaknesses = document.getElementById('adgen-weaknesses').value.trim();
+
+  if (!company || !product) { toast('Company and product are required', 'red'); return; }
+
+  adgenData = { company, domain };
+  document.getElementById('concepts-spinner').style.display = '';
+  showAdPanel(2);
+  document.getElementById('concepts-loading').style.display = '';
+  document.getElementById('concept-grid').innerHTML = '';
+
+  const websiteData = { title: company, description: product, products: [product], positioning: valueProp, valueProposition: valueProp, industry: 'unknown', techStack: [], hasEcommerce: false, hasPricing: false, rawText: `${product} ${audience}` };
+  const adStrategy = { summary: '', targetAudience: audience, messagingThemes: [product], contentTypes: [], estimatedBudget: '', strengths: [], weaknesses: weaknesses ? [weaknesses] : [], opportunities: [], recommendedAngle: `highlight: ${valueProp}`, personalizationHook: '' };
+
+  try {
+    const res = await fetch('/api/ad-generator/concepts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ company, domain, websiteData, adStrategy }),
+    });
+    const { concepts } = await res.json();
+    adConceptsData = concepts;
+    renderConcepts(concepts);
+  } catch (err) {
+    toast('Failed to generate concepts: ' + err.message, 'red');
+  } finally {
+    document.getElementById('concepts-loading').style.display = 'none';
+    document.getElementById('concepts-spinner').style.display = 'none';
+  }
+}
+
+function renderConcepts(concepts) {
+  const grid = document.getElementById('concept-grid');
+  grid.innerHTML = concepts.map((c, i) => `
+    <div class="concept-card" id="concept-${c.id ?? i}" onclick="selectConcept('${c.id ?? i}')">
+      <div class="concept-headline">${c.headline}</div>
+      <div class="concept-body">${c.bodyText}</div>
+      <div class="concept-cta">${c.ctaText}</div>
+      <div class="concept-hook">Hook: ${c.hook}</div>
+    </div>
+  `).join('');
+}
+
+function selectConcept(id) {
+  document.querySelectorAll('.concept-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById(`concept-${id}`).classList.add('selected');
+  selectedConceptId = id;
+}
+
+async function goToImageGen() {
+  const conceptsToGenerate = selectedConceptId
+    ? [adConceptsData.find(c => (c.id ?? adConceptsData.indexOf(c)) == selectedConceptId)]
+    : adConceptsData;
+
+  showAdPanel(3);
+  const grid = document.getElementById('ad-image-grid');
+  grid.innerHTML = conceptsToGenerate.map((c, i) => `
+    <div class="ad-image-card" id="adimg-${i}">
+      <div class="generating-overlay">
+        <div class="spinner" style="width:24px;height:24px"></div>
+        <div class="generating-text">Generating...</div>
+      </div>
+      <div class="ad-image-placeholder" style="display:none"><div class="icon">🖼</div><div>${c.headline}</div></div>
+    </div>
+  `).join('');
+
+  for (let i = 0; i < conceptsToGenerate.length; i++) {
+    const concept = conceptsToGenerate[i];
+    try {
+      const res = await fetch('/api/ad-generator/image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ concept, company: adgenData.company, domain: adgenData.domain }),
+      });
+      const { ad } = await res.json();
+      const card = document.getElementById(`adimg-${i}`);
+      if (ad.hasImage) {
+        card.innerHTML = `<img src="data:image/png;base64,${ad.imageBase64}" alt="${concept.headline}">`;
+      } else {
+        card.innerHTML = `<div class="ad-image-placeholder"><div class="icon">🖼</div><div style="font-size:11px;padding:10px">${concept.headline}<br><span style="color:var(--muted);font-size:10px">No image (API key required)</span></div></div>`;
+      }
+    } catch {
+      const card = document.getElementById(`adimg-${i}`);
+      card.innerHTML = `<div class="ad-image-placeholder"><div class="icon">⚠️</div><div style="font-size:11px">Generation failed</div></div>`;
+    }
+  }
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+const STEP_NAMES = ['domain-validation','website-scraping','meta-ads','ai-analysis','icp-scoring','email-enrichment','ad-generation','email-delivery'];
+
+function getStepNames() { return STEP_NAMES; }
+
+function markStep(stepName, state) {
+  const el = document.getElementById(`step-${stepName}`);
+  const bar = document.getElementById(`bar-${stepName}`);
+  const status = document.getElementById(`status-${stepName}`);
+  if (!el) return;
+
+  el.classList.remove('active','done','error');
+  el.classList.add(state);
+
+  if (state === 'active') {
+    status.innerHTML = '<div class="spinner"></div>';
+    bar.style.width = '60%';
+  } else if (state === 'done') {
+    status.textContent = 'Done';
+    bar.style.width = '100%';
+  } else if (state === 'error') {
+    status.textContent = 'Error';
+  }
+}
+
+function updateStatusBadge(state, text) {
+  const badge = document.getElementById('status-badge');
+  badge.className = 'badge';
+  if (state === 'running') badge.classList.add('badge-blue');
+  else if (state === 'done') badge.classList.add('badge-green');
+  else if (state === 'error') badge.classList.add('badge-red');
+  badge.textContent = text;
+}
+
+function toast(msg, color = 'blue') {
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  const colors = { green: '#22c55e', red: '#ef4444', blue: '#4f7cff', yellow: '#eab308' };
+  el.innerHTML = `<span style="color:${colors[color] ?? colors.blue};font-size:16px">●</span> ${msg}`;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1024/1024).toFixed(1) + ' MB';
+}
+</script>
+</body>
+</html>

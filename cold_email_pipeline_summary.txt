@@ -1,0 +1,107 @@
+Cold Email Pipeline — YouTube Short Summary
+Uploader: Brian La Porta
+URL: https://youtube.com/shorts/FgwULWMCGho?feature=share
+Duration: 1:02
+
+================================================================================
+OVERVIEW
+================================================================================
+
+A Claude Code-built cold outbound system that processed 55,000 prospects,
+with every email personalized to what that business is actually doing.
+
+================================================================================
+THE PIPELINE
+================================================================================
+
+1. CSV UPLOAD
+   - Drop up to 150,000 prospect rows into the web app (Cold Outbound > Upload)
+
+2. DOMAIN VALIDATION
+   - Validates domains through Hunter
+
+3. WEBSITE SCRAPING
+   - Scrapes each prospect's site for products and positioning
+
+4. META ADS CHECK
+   - Hits the Meta Ads Library to see if they're running ads
+   - If yes, pulls the actual creative
+
+5. AI STRATEGY ANALYSIS
+   - Claude + Gemini analyze their ad strategy
+
+6. ICP SCORING
+   - Scores each prospect against the Ideal Customer Profile
+
+7. TOP 20% — AI-GENERATED SAMPLE ADS
+   - AI-generated ads made specifically for their brand
+   - Uses Nano Banana 2 (Gemini image model)
+
+8. PERSONALIZED EMAIL DELIVERY
+   - Everyone gets a personalized email via Instantly
+   - References what they're actually running
+
+================================================================================
+COST
+================================================================================
+
+$0.16 per prospect for the full pipeline
+
+================================================================================
+TECH STACK
+================================================================================
+
+- Claude Code (pipeline orchestration)
+- Hunter (domain validation)
+- Meta Ads Library (ad creative pull)
+- Claude + Gemini (strategy analysis)
+- Nano Banana 2 / Gemini (AI ad image generation)
+- Instantly (email delivery)
+- Apollo, Kitt, LeadMagic, IcyPeas, Pattern (email enrichment waterfall)
+
+================================================================================
+CODE
+================================================================================
+
+File: email-waterfall.ts
+Type: TypeScript — 8-layer, two-pass email enrichment waterfall
+
+Waterfall sources:
+  - apollo_enrich
+  - kitt_finder
+  - leadmagic_finder
+  - leadmagic_personal
+  - leadmagic_b2b_social
+  - hunter_finder
+  - hunter_domain
+  - pattern_guess
+  - icypeas_finder
+
+Also shown: Prospect Ad Generator UI (3-step: Product Info > Select Concept > Generate Images)
+
+================================================================================
+TRANSCRIPT (verbatim)
+================================================================================
+
+[00:03] I use Claude Code to send 55,000 personal cold emails. I use Claude Code
+[00:06] personal cold emails. I use Claude Code to build a complete cold outbound
+[00:09] to build a complete cold outbound pipeline that's processed 55,000
+[00:12] pipeline that's processed 55,000 prospects automatically. And every
+[00:14] prospects automatically. And every single email is completely personalized
+[00:17] single email is completely personalized to what that business is actually doing.
+[00:20] to what that business is actually doing. The system validates domains through
+[00:22] The system validates domains through Hunter, scrapes their websites for
+[00:24] Hunter, scrapes their websites for products and positionings, checks the
+[00:27] products and positionings, checks the meta ads library to see if they're
+[00:28] meta ads library to see if they're running any ads, and if they are, it
+[00:31] running any ads, and if they are, it pulls the creative, and then Claude and
+[00:33] pulls the creative, and then Claude and Gemini analyze their strategy, then it
+[00:36] Gemini analyze their strategy, then it scores them against my ICP. The top 20%
+[00:40] scores them against my ICP. The top 20% of prospects get AI generated sample ads
+[00:44] of prospects get AI generated sample ads made specifically for their brand using
+[00:46] made specifically for their brand using Nano Banana 2. And everyone gets a
+[00:49] Nano Banana 2. And everyone gets a personalized email through instantly
+[00:51] personalized email through instantly referencing what they're actually
+[00:53] referencing what they're actually running. 16 cents per prospect for the
+[00:57] running. 16 cents per prospect for the full pipeline. Comment down below if you
+[00:59] full pipeline. Comment down below if you want some more of the sauce.
