@@ -23,7 +23,7 @@ const upload = multer({
 });
 
 app.use(express.json());
-app.use(express.static(path.join(process.cwd(), 'public')));
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // ── Active sessions ────────────────────────────────────────────────────────────
 const sessions = new Map<string, { result?: PipelineResult; status: 'running' | 'done' | 'error' }>();
@@ -185,12 +185,14 @@ io.on('connection', (socket) => {
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 
-const PORT = parseInt(process.env.PORT ?? '3000', 10);
-http.listen(PORT, () => {
-  const localIp = getLocalIP();
-  logger.info(`Cold Email Pipeline running at http://localhost:${PORT}`);
-  if (localIp) logger.info(`Network: http://${localIp}:${PORT}`);
-});
+if (!process.env.VERCEL) {
+  const PORT = parseInt(process.env.PORT ?? '3000', 10);
+  http.listen(PORT, () => {
+    const localIp = getLocalIP();
+    logger.info(`Cold Email Pipeline running at http://localhost:${PORT}`);
+    if (localIp) logger.info(`Network: http://${localIp}:${PORT}`);
+  });
+}
 
 function getLocalIP(): string | null {
   const nets = os.networkInterfaces();
