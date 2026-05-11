@@ -2,6 +2,7 @@
   "name": "cold-email-pipeline",
   "version": "1.0.0",
   "description": "AI-powered cold email pipeline — 8-stage enrichment, personalized at scale",
+  "type": "module",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",

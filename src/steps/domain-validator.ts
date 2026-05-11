@@ -1,7 +1,7 @@
 import axios from 'axios';
-import type { Prospect, DomainValidationResult } from '../types';
-import { rateLimiters, withRetry } from '../utils/rate-limiter';
-import { stepLogger } from '../utils/logger';
+import type { Prospect, DomainValidationResult } from '../types.js';
+import { rateLimiters, withRetry } from '../utils/rate-limiter.js';
+import { stepLogger } from '../utils/logger.js';
 
 const log = stepLogger('domain-validator');
 const HUNTER_API = 'https://api.hunter.io/v2';

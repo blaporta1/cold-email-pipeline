@@ -1,8 +1,8 @@
 import axios from 'axios';
-import type { EnrichedProspect, GeneratedAd } from '../types';
-import { EMAIL_TEMPLATES } from '../icp-config';
-import { rateLimiters, withRetry } from '../utils/rate-limiter';
-import { stepLogger } from '../utils/logger';
+import type { EnrichedProspect, GeneratedAd } from '../types.js';
+import { EMAIL_TEMPLATES } from '../icp-config.js';
+import { rateLimiters, withRetry } from '../utils/rate-limiter.js';
+import { stepLogger } from '../utils/logger.js';
 
 const log = stepLogger('email-sender');
 const INSTANTLY_API = 'https://api.instantly.ai/api/v1';

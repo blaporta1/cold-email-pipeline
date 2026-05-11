@@ -5,10 +5,14 @@ import multer from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import { parseCSVBuffer } from './steps/csv-parser';
-import { runPipeline, DEFAULT_CONFIG } from './pipeline';
-import type { PipelineProgress, PipelineResult, PipelineConfig } from './types';
-import { logger } from './utils/logger';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+import { parseCSVBuffer } from './steps/csv-parser.js';
+import { runPipeline, DEFAULT_CONFIG } from './pipeline.js';
+import type { PipelineProgress, PipelineResult, PipelineConfig } from './types.js';
+import { logger } from './utils/logger.js';
 
 const app  = express();
 const http = createServer(app);
@@ -147,7 +151,7 @@ app.post('/api/ad-generator/concepts', express.json(), async (req, res) => {
   }
 
   try {
-    const { generateAdConcepts } = await import('./steps/ad-generator');
+    const { generateAdConcepts } = await import('./steps/ad-generator.js');
     const prospect = { id: 'preview', firstName: '', lastName: '', fullName: company, company, domain, title: '', linkedinUrl: '' };
     const concepts = await generateAdConcepts(prospect, websiteData ?? emptyWebsite(), adStrategy ?? {}, 3);
     res.json({ concepts });
@@ -165,7 +169,7 @@ app.post('/api/ad-generator/image', express.json(), async (req, res) => {
   }
 
   try {
-    const { generateAdImage } = await import('./steps/ad-generator');
+    const { generateAdImage } = await import('./steps/ad-generator.js');
     const outputDir = path.join(process.cwd(), 'output');
     const prospect = { id: `preview-${Date.now()}`, firstName: '', lastName: '', fullName: company, company, domain, title: '', linkedinUrl: '' };
     const ad = await generateAdImage(concept, prospect, outputDir);

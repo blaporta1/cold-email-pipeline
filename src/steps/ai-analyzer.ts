@@ -1,8 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import type { WebsiteData, MetaAdsResult, AdStrategyAnalysis } from '../types';
-import { rateLimiters, withRetry } from '../utils/rate-limiter';
-import { stepLogger } from '../utils/logger';
+import type { WebsiteData, MetaAdsResult, AdStrategyAnalysis } from '../types.js';
+import { rateLimiters, withRetry } from '../utils/rate-limiter.js';
+import { stepLogger } from '../utils/logger.js';
 
 const log = stepLogger('ai-analyzer');
 

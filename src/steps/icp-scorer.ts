@@ -1,6 +1,6 @@
-import type { Prospect, WebsiteData, MetaAdsResult, AdStrategyAnalysis, ICPScore } from '../types';
-import { ICP_CONFIG } from '../icp-config';
-import { stepLogger } from '../utils/logger';
+import type { Prospect, WebsiteData, MetaAdsResult, AdStrategyAnalysis, ICPScore } from '../types.js';
+import { ICP_CONFIG } from '../icp-config.js';
+import { stepLogger } from '../utils/logger.js';
 
 const log = stepLogger('icp-scorer');
 

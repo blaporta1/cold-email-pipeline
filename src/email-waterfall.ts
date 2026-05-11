@@ -16,9 +16,9 @@
  */
 
 import axios from 'axios';
-import type { Prospect, EmailWaterfallResult, WaterfallSource } from './types';
-import { rateLimiters, withRetry } from './utils/rate-limiter';
-import { stepLogger } from './utils/logger';
+import type { Prospect, EmailWaterfallResult, WaterfallSource } from './types.js';
+import { rateLimiters, withRetry } from './utils/rate-limiter.js';
+import { stepLogger } from './utils/logger.js';
 
 const log = stepLogger('email-waterfall');
 

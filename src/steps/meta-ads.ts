@@ -1,7 +1,7 @@
 import axios from 'axios';
-import type { Prospect, WebsiteData, MetaAd, MetaAdsResult } from '../types';
-import { rateLimiters, withRetry } from '../utils/rate-limiter';
-import { stepLogger } from '../utils/logger';
+import type { Prospect, WebsiteData, MetaAd, MetaAdsResult } from '../types.js';
+import { rateLimiters, withRetry } from '../utils/rate-limiter.js';
+import { stepLogger } from '../utils/logger.js';
 
 const log = stepLogger('meta-ads');
 const GRAPH_API = 'https://graph.facebook.com/v19.0';

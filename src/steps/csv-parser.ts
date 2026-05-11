@@ -2,8 +2,8 @@ import { parse } from 'csv-parse/sync';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuid } from 'uuid';
-import type { RawProspect, Prospect } from '../types';
-import { stepLogger } from '../utils/logger';
+import type { RawProspect, Prospect } from '../types.js';
+import { stepLogger } from '../utils/logger.js';
 
 const log = stepLogger('csv-parser');
 

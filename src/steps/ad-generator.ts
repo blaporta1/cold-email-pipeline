@@ -3,9 +3,9 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuid } from 'uuid';
-import type { Prospect, WebsiteData, MetaAdsResult, AdStrategyAnalysis, GeneratedAdConcept, GeneratedAd } from '../types';
-import { rateLimiters, withRetry } from '../utils/rate-limiter';
-import { stepLogger } from '../utils/logger';
+import type { Prospect, WebsiteData, MetaAdsResult, AdStrategyAnalysis, GeneratedAdConcept, GeneratedAd } from '../types.js';
+import { rateLimiters, withRetry } from '../utils/rate-limiter.js';
+import { stepLogger } from '../utils/logger.js';
 
 const log = stepLogger('ad-generator');
 

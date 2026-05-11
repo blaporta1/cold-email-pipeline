@@ -1,9 +1,9 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import type { Prospect, WebsiteData } from '../types';
-import { rateLimiters, withRetry } from '../utils/rate-limiter';
-import { ICP_CONFIG } from '../icp-config';
-import { stepLogger } from '../utils/logger';
+import type { Prospect, WebsiteData } from '../types.js';
+import { rateLimiters, withRetry } from '../utils/rate-limiter.js';
+import { ICP_CONFIG } from '../icp-config.js';
+import { stepLogger } from '../utils/logger.js';
 
 const log = stepLogger('website-scraper');
 

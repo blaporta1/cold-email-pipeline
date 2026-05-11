@@ -10,16 +10,16 @@ import type {
   PipelineResult,
   PipelineStep,
   ICPScore,
-} from './types';
-import { validateDomain, isDomainUsable } from './steps/domain-validator';
-import { scrapeWebsite } from './steps/website-scraper';
-import { checkMetaAds } from './steps/meta-ads';
-import { analyzeAdStrategy, generateEmailPersonalization } from './steps/ai-analyzer';
-import { scoreProspect, assignTiers } from './steps/icp-scorer';
-import { runWaterfall } from './email-waterfall';
-import { generateAdsForProspect } from './steps/ad-generator';
-import { sendBatch } from './steps/email-sender';
-import { logger, stepLogger } from './utils/logger';
+} from './types.js';
+import { validateDomain, isDomainUsable } from './steps/domain-validator.js';
+import { scrapeWebsite } from './steps/website-scraper.js';
+import { checkMetaAds } from './steps/meta-ads.js';
+import { analyzeAdStrategy, generateEmailPersonalization } from './steps/ai-analyzer.js';
+import { scoreProspect, assignTiers } from './steps/icp-scorer.js';
+import { runWaterfall } from './email-waterfall.js';
+import { generateAdsForProspect } from './steps/ad-generator.js';
+import { sendBatch } from './steps/email-sender.js';
+import { logger, stepLogger } from './utils/logger.js';
 
 const log = stepLogger('pipeline');
 
